@@ -1,0 +1,3 @@
+Commit (Select * from table1)
+Abort (Select * from table2 where age>20)
+Abort (Select age from table2 where name="santosh")
