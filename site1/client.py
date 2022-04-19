@@ -7,7 +7,7 @@ def perform_operation(query):
 
 f = open("log.txt","w")
 s = socket.socket()          
-# s.connect(('127.0.0.1', 8000))
+s.connect(('127.0.0.1', 8000))
 
 
 connection = pymysql.connect(host='localhost',
@@ -29,14 +29,17 @@ def test():
 while True:
 
     received_msg = s.recv(1024).decode('utf-8').strip()
-    while(received_msg == ""):
-        pass
+    print(received_msg)
+    query = received_msg[9:-1]
+    # print("query is :",query)
+    # while(received_msg == ""):
+    #     pass
     
     if(received_msg == "End session"):
         break
 
-    _,q = received_msg.split("(")
-    query = q[:-1]
+    # _,q = received_msg.split("(")
+    # query = q[:-1]
     print("Query: ",query)
 
     operation = input("Are you ready to perform above query? Enter yes or no: ").lower()
@@ -59,7 +62,7 @@ while True:
     else:
         f.write("Abort ("+query+")\n")
 
-# f.close()
-# s.close()
+f.close()
+s.close()
 test()
    

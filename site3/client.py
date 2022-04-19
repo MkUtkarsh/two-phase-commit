@@ -9,14 +9,17 @@ s.connect(('127.0.0.1', 8000))
 
 while True:
     received_msg = s.recv(1024).decode('utf-8').strip()
-    while(received_msg == ""):
-        pass
+    print(received_msg)
+    query = received_msg[9:-1]
+    # print("query is :",query)
+    # while(received_msg == ""):
+    #     pass
     
     if(received_msg == "End session"):
         break
 
-    _,q = received_msg.split("(")
-    query = q[:-1]
+    # _,q = received_msg.split("(")
+    # query = q[:-1]
     print("Query: ",query)
 
     operation = input("Are you ready to perform above query? Enter yes or no: ").lower()

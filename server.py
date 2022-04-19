@@ -18,6 +18,7 @@ def make_connection():
         client_addresses.append(c)
     return s
 
+# this is phase1
 def send_initial_message(query):
     global num_commits
     global client_addresses
@@ -56,7 +57,8 @@ def perform_main_code():
 
     
     while True:
-        query = input("Enter new query: ")
+        # query = input("Enter new query: ")
+        query = "INSERT INTO employee_table VALUES (6,'varun','sde',27);"
         send_initial_message(query)
         send_final_message()
         flag = input("Do you want to fire new query?Type yes or no: ")
