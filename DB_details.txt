@@ -1,0 +1,27 @@
+mysql -u user -piiit123 --> Login mysql as user (Have granted all prev)
+
+Created 4 databases
+client1,client2,client3,coordinator
+
+in each db created the following table
+
+CREATE TABLE employee_table(  
+    id int NOT NULL AUTO_INCREMENT,  
+    name varchar(45) NOT NULL,  
+    occupation varchar(35) NOT NULL,  
+    age int NOT NULL,  
+    PRIMARY KEY (id)  
+);
+
+##################### Transaction commands ###############
+START TRANSACTION;
+
+INSERT INTO employee_table VALUES (1,'varun','sde',27);
+
+COMMIT;
+
+#################End of Transaction ##################
+
+
+
+
