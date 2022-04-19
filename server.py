@@ -50,7 +50,6 @@ def send_initial_message(query):
 
         client.send(("Prepare "+query).encode())
         operation_type = client.recv(1024).decode('utf-8').strip()
-
         if(operation_type == ("ready "+query)):
             num_commits += 1
             print("curr ready count : ",num_commits)
