@@ -1,11 +1,19 @@
-import socket               
+import socket  
+import pymysql              
 
 def perform_operation(query):
     print("Performed "+query+"\n")
 
 f = open("log.txt","w")
 s = socket.socket()          
-s.connect(('127.0.0.1', 8000))  
+s.connect(('127.0.0.1', 8123))
+
+connection = pymysql.connect(host='localhost',
+                             user='user',
+                             password='iiit123',
+                             db='client2',
+                             autocommit=False)
+cursor = connection.cursor()
 
 while True:
     received_msg = s.recv(1024).decode('utf-8').strip()

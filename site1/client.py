@@ -1,13 +1,13 @@
 import socket     
 
-import pymysql.cursors          
+import pymysql      
 
 def perform_operation(query):
     print("Performed "+query+"\n")
 
 f = open("log.txt","w")
 s = socket.socket()          
-s.connect(('127.0.0.1', 8000))
+s.connect(('127.0.0.1', 8123))
 
 
 connection = pymysql.connect(host='localhost',
