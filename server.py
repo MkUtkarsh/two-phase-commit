@@ -42,7 +42,7 @@ def send_initial_message(query):
     if coord_ready == False:
         print("Coordinator is not prepared to run the tran ")
         connection.rollback()
-        return 
+        return coord_ready
 
     f.write("Prepare "+query+"\n")
     print("Write prepare in log ")
@@ -54,6 +54,8 @@ def send_initial_message(query):
         if(operation_type == ("ready "+query)):
             num_commits += 1
             print("curr ready count : ",num_commits)
+    
+    return coord_ready
 
 
 # This is phase2
@@ -74,6 +76,7 @@ def send_final_message():
     else:
         f.write("Commit "+query+"\n")
         connection.commit()
+        print("committed at coord and writing in log")
         for client in client_addresses:
             client.send(("Commit "+query).encode())
     
@@ -85,7 +88,7 @@ def perform_main_code():
     
     while True:
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (6,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (7,'varun','sde',27);"
         coord_ready = send_initial_message(query)
         if coord_ready:
             send_final_message()

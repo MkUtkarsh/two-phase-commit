@@ -30,7 +30,7 @@ while True:
 
     received_msg = s.recv(1024).decode('utf-8').strip()
     print(received_msg)
-    query = received_msg[9:-1]
+    query = received_msg[8:-1]
     # print("query is :",query)
     # while(received_msg == ""):
     #     pass
