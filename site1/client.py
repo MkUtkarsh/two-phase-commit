@@ -1,13 +1,33 @@
-import socket               
+import socket     
+
+import pymysql.cursors          
 
 def perform_operation(query):
     print("Performed "+query+"\n")
 
 f = open("log.txt","w")
 s = socket.socket()          
-s.connect(('127.0.0.1', 8000))  
+# s.connect(('127.0.0.1', 8000))
+
+
+connection = pymysql.connect(host='localhost',
+                             user='user',
+                             password='iiit123',
+                             db='client1',
+                             autocommit=False)
+cursor = connection.cursor()
+
+def test():
+    query = "INSERT INTO employee_table VALUES (6,'varun','sde',27);"
+    cursor.execute(query)
+    # connection.rollback()
+    connection.commit()
+    # connection.close()
+    return
+
 
 while True:
+
     received_msg = s.recv(1024).decode('utf-8').strip()
     while(received_msg == ""):
         pass
@@ -39,6 +59,7 @@ while True:
     else:
         f.write("Abort ("+query+")\n")
 
-f.close()
-s.close()
+# f.close()
+# s.close()
+test()
    
