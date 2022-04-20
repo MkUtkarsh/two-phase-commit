@@ -31,8 +31,8 @@ def make_connection():
 
 # this is phase1
 def send_initial_message(query):
-    # global num_commits
-    # global client_addresses
+    global num_commits
+    global client_addresses
     f.write("Prepare "+query+"\n")
     f.flush()
 
@@ -95,7 +95,7 @@ def perform_main_code():
     
     while True:
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (9,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (10,'varun','sde',27);"
         coord_ready = send_initial_message(query)
         if coord_ready:
             send_final_message()
