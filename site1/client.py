@@ -5,9 +5,9 @@ import pymysql
 def perform_operation(query):
     print("Performed "+query+"\n")
 
-f = open("log.txt","w")
 s = socket.socket()          
 s.connect(('127.0.0.1', 8123))
+f = open("log.txt","w+") 
 
 
 connection = pymysql.connect(host='localhost',
@@ -17,52 +17,48 @@ connection = pymysql.connect(host='localhost',
                              autocommit=False)
 cursor = connection.cursor()
 
-def test():
-    query = "INSERT INTO employee_table VALUES (6,'varun','sde',27);"
-    cursor.execute(query)
-    # connection.rollback()
-    connection.commit()
-    # connection.close()
-    return
-
-
 while True:
-
+    # putting f here to see output of log while the process is running
     received_msg = s.recv(1024).decode('utf-8').strip()
-    print(received_msg)
     query = received_msg[8:]
-    # print("query is :",query)
-    # while(received_msg == ""):
-    #     pass
-    
-    if(received_msg == "End session"):
-        break
-
-    # _,q = received_msg.split("(")
-    # query = q[:-1]
     print("Query: ",query)
+
+    # phase-1 checking if the client is ready
+    prepare_ready = True
+    try:
+        cursor.execute(query)
+    except:
+        prepare_ready = False
+    print("prepare status is : ",prepare_ready)
 
     operation = input("Are you ready to perform above query? Enter yes or no: ").lower()
 
-    if(operation == "yes"):
-        f.write("ready ("+query+")\n")
+    if(operation == "yes" and prepare_ready):
+        f.write("ready "+query+"\n")
+        f.flush()
         s.send(("ready "+query).encode())
     else:
         f.write("no ("+query+")\n")
+        f.flush()
         s.send(("abort "+query).encode())
+    
+    # Phase 1 has ended
 
+
+    # waiting for commit or abort from the coordinator
     final_operation = s.recv(1024).decode('utf-8').strip()
 
-    while(final_operation == ""):
-        pass
-
     if(final_operation == ("Commit "+query)):
-        f.write("Commit ("+query+")\n")
-        perform_operation(query)
+        f.write("Commit "+query+"\n")
+        f.flush()
+        connection.commit()
+        print("committed at client1 and written in log")
     else:
-        f.write("Abort ("+query+")\n")
+        f.write("Abort "+query+"\n")
+        f.flush()
+        connection.rollback()
+        print("Got abort from coord. Hence aborted the transaction")
 
-f.close()
 s.close()
 test()
    

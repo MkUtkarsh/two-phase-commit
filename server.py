@@ -1,8 +1,9 @@
 import socket
 import pymysql.cursors 
+import atexit
 
 num_commits,num_of_clients = 0,1
-f = open("log.txt","w")
+f = open("log.txt","w+")
 
 client_addresses = []
 query = ""
@@ -30,8 +31,11 @@ def make_connection():
 
 # this is phase1
 def send_initial_message(query):
-    global num_commits
-    global client_addresses
+    # global num_commits
+    # global client_addresses
+    f.write("Prepare "+query+"\n")
+    f.flush()
+
     coord_ready = True
     try:
         cursor.execute(query)
@@ -41,10 +45,12 @@ def send_initial_message(query):
 
     if coord_ready == False:
         print("Coordinator is not prepared to run the tran ")
+        f.write("Abort "+query+"\n")
+        f.flush()
         connection.rollback()
         return coord_ready
 
-    f.write("Prepare "+query+"\n")
+
     print("Write prepare in log ")
     for client in client_addresses:
 
@@ -68,12 +74,14 @@ def send_final_message():
 
     if(num_commits < num_of_clients):
         f.write("Abort "+query+"\n")
+        f.flush()
         connection.rollback()
         print("all clients are not ready hence aborting and writing in log")
         for client in client_addresses:
             client.send(("Abort "+query).encode())
     else:
         f.write("Commit "+query+"\n")
+        f.flush()
         connection.commit()
         print("committed at coord and writing in log")
         for client in client_addresses:
@@ -87,7 +95,7 @@ def perform_main_code():
     
     while True:
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (7,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (9,'varun','sde',27);"
         coord_ready = send_initial_message(query)
         if coord_ready:
             send_final_message()
@@ -99,11 +107,17 @@ def perform_main_code():
         query = ""
         num_commits = 0
 
+
 s = make_connection()
+
+def exit_handler():
+    f.close()
+    s.close()
+atexit.register(exit_handler)
+
 perform_main_code()
 
-f.close()
-s.close()
+
    
     
 
