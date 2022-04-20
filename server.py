@@ -2,7 +2,7 @@ import socket
 import pymysql.cursors 
 import atexit
 
-num_commits,num_of_clients = 0,1
+num_commits,num_of_clients = 0,3
 f = open("log.txt","w+")
 
 client_addresses = []
@@ -33,6 +33,7 @@ def make_connection():
 def send_initial_message(query):
     global num_commits
     global client_addresses
+    print("Write prepare in log ")
     f.write("Prepare "+query+"\n")
     f.flush()
 
@@ -50,10 +51,7 @@ def send_initial_message(query):
         connection.rollback()
         return coord_ready
 
-
-    print("Write prepare in log ")
     for client in client_addresses:
-
         client.send(("Prepare "+query).encode())
         operation_type = client.recv(1024).decode('utf-8').strip()
         if(operation_type == ("ready "+query)):
@@ -95,8 +93,8 @@ def perform_main_code():
     
     while True:
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (10,'varun','sde',27);"
-        coord_ready = send_initial_message(query)
+        # query = "INSERT INTO employee_table VALUES (11,'varun','sde',27);"
+        coord_ready = send_initial_message(query) # phase1
         if coord_ready:
             send_final_message()
         flag = input("Do you want to fire new query?Type yes or no: ")
@@ -116,8 +114,3 @@ def exit_handler():
 atexit.register(exit_handler)
 
 perform_main_code()
-
-
-   
-    
-

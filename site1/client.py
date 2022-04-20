@@ -38,7 +38,7 @@ while True:
         f.flush()
         s.send(("ready "+query).encode())
     else:
-        f.write("no ("+query+")\n")
+        f.write("no "+query+"\n")
         f.flush()
         s.send(("abort "+query).encode())
     
@@ -58,7 +58,4 @@ while True:
         f.flush()
         connection.rollback()
         print("Got abort from coord. Hence aborted the transaction")
-
-s.close()
-test()
    
