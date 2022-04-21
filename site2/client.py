@@ -6,7 +6,7 @@ import requests
 
 app = Flask(__name__)
 
-f = open("log.txt","w+")
+f = open("log.txt","a+")
 
 
 connection = pymysql.connect(host='localhost',
@@ -33,11 +33,11 @@ def run_phase1():
     operation = input("Are you ready to perform above query? Enter yes or no: ").lower()
 
     if(operation == "yes" and prepare_ready):
-        f.write("Ready \""+received_query+"\" "+t_id+"\n")
+        f.write("Ready,\""+received_query+"\","+t_id+"\n")
         f.flush()
         return jsonify({'status': "ready "+received_query})
     else:
-        f.write("No \""+received_query+"\" "+t_id+"\n")
+        f.write("No,\""+received_query+"\","+t_id+"\n")
         f.flush()
         return jsonify({'status': "abort "+received_query})
 
@@ -49,12 +49,12 @@ def run_phase2():
     decision = data['decision']
 
     if(decision == ("Commit")):
-        f.write("Commit \""+received_query+"\" "+t_id+"\n")
+        f.write("Commit,\""+received_query+"\","+t_id+"\n")
         f.flush()
         connection.commit()
         print("committed at client1 and written in log")
     else:
-        f.write("Abort \""+received_query+"\" "+t_id+"\n")
+        f.write("Abort,\""+received_query+"\","+t_id+"\n")
         f.flush()
         connection.rollback()
         print("Got abort from coord. Hence aborted the transaction")

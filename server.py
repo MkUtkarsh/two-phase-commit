@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 num_commits = 0
 num_of_clients = 2
-f = open("log.txt","w+")
+f = open("log.txt","a+")
 
 # client_addresses = ["http://localhost:5123","http://localhost:5124","http://localhost:5125"]
 client_addresses = ["http://localhost:5124","http://localhost:5125"]
@@ -43,7 +43,7 @@ def thread_function(url,query,t_id):
 def execute_phase1(query,t_id):
     global num_commits
     print("Write prepare in log ")
-    f.write("Prepare \""+query+"\" "+t_id+"\n")
+    f.write("Prepare,\""+query+"\","+t_id+"\n")
     f.flush()
 
     coord_ready = True
@@ -55,7 +55,7 @@ def execute_phase1(query,t_id):
 
     if coord_ready == False:
         print("Coordinator is not prepared to run the tran ")
-        f.write("Abort \""+query+"\" "+t_id+"\n")
+        f.write("Abort,\""+query+"\","+t_id+"\n")
         f.flush()
         connection.rollback()
         return coord_ready
@@ -73,7 +73,7 @@ def execute_phase1(query,t_id):
 def execute_phase2(query,t_id):
     global num_commits
     if(num_commits < num_of_clients):
-        f.write("Abort \""+query+"\" "+t_id+"\n")
+        f.write("Abort,\""+query+"\","+t_id+"\n")
         f.flush()
         connection.rollback()
         print("all clients are not ready hence aborting and writing in log")
@@ -90,7 +90,7 @@ def execute_phase2(query,t_id):
                 print("Couldn't send decision to : ",c)
             # client.send(("Abort "+query).encode())
     else:
-        f.write("Commit \""+query+"\" "+t_id+"\n")
+        f.write("Commit,\""+query+"\","+t_id+"\n")
         f.flush()
         connection.commit()
         print("committed at coord and writing in log")
@@ -112,7 +112,7 @@ def main_code():
     while True:
         num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (21,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (1,'varun','sde',27);"
         t_id = "t"+str(uuid.uuid4().hex)
         coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:
