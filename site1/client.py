@@ -2,6 +2,7 @@ import pymysql
 from flask import Flask
 from flask import request
 from flask import jsonify
+import pandas as pd
 import requests
 
 app = Flask(__name__)
@@ -33,11 +34,11 @@ def run_phase1():
     operation = input("Are you ready to perform above query? Enter yes or no: ").lower()
 
     if(operation == "yes" and prepare_ready):
-        f.write("Ready,\""+received_query+"\","+t_id+"\n")
+        f.write("Ready***\""+received_query+"\"***"+t_id+"\n")
         f.flush()
         return jsonify({'status': "ready "+received_query})
     else:
-        f.write("No,\""+received_query+"\","+t_id+"\n")
+        f.write("No***\""+received_query+"\"***"+t_id+"\n")
         f.flush()
         return jsonify({'status': "abort "+received_query})
 
@@ -49,18 +50,30 @@ def run_phase2():
     decision = data['decision']
 
     if(decision == ("Commit")):
-        f.write("Commit,\""+received_query+"\","+t_id+"\n")
+        f.write("Commit***\""+received_query+"\"***"+t_id+"\n")
         f.flush()
         connection.commit()
         print("committed at client1 and written in log")
     else:
-        f.write("Abort,\""+received_query+"\","+t_id+"\n")
+        f.write("Abort***\""+received_query+"\"***"+t_id+"\n")
         f.flush()
         connection.rollback()
         print("Got abort from coord. Hence aborted the transaction")
     return ('', 204)
-    
+
+def recover():
+    df = pd.read_csv("log.txt", sep='\*\*\*',engine='python',header=None)
+    df.columns =['status', 'query', 'id']
+    print(df)
+    print("last row : ",df.iloc[-1])
+    last_status = df.iloc[-1]['status']
+    print('last status : ',last_status)
+    if(last_status == 'Ready'):
+        # Need to find out if the last status was commited or aborted
+        # will ask server about the status 
+        pass
 
 if __name__ == '__main__':
-   app.run(host='0.0.0.0',port=5124,debug=True)
+    recover()
+    #app.run(host='0.0.0.0',port=5124,debug=True)
    
