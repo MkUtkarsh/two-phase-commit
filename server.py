@@ -84,7 +84,10 @@ def execute_phase2(query,t_id):
                 "t_id": t_id,
                 "decision": "Abort"
             }
-            response = requests.post(curr_url, json=data)
+            try:
+                response = requests.post(curr_url, json=data)
+            except:
+                print("Couldn't send decision to : ",c)
             # client.send(("Abort "+query).encode())
     else:
         f.write("Commit \""+query+"\" "+t_id+"\n")
@@ -98,7 +101,10 @@ def execute_phase2(query,t_id):
                 "t_id": t_id,
                 "decision": "Commit"
             }
-            response = requests.post(curr_url, json=data)
+            try:
+                response = requests.post(curr_url, json=data)
+            except:
+                print("Couldn't send decision to : ",c)
 
     
 def main_code():
@@ -106,7 +112,7 @@ def main_code():
     while True:
         num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (18,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (21,'varun','sde',27);"
         t_id = "t"+str(uuid.uuid4().hex)
         coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:

@@ -21,6 +21,7 @@ def run_phase1():
     data = request.get_json()
     received_query = data['query']
     t_id = data['t_id']
+    print("Query recieved : ",received_query)
 
     prepare_ready = True
     try:
