@@ -29,11 +29,15 @@ def thread_function(url,query,t_id):
         "query": query,
         "t_id": t_id
     }
-    response = requests.post(curr_url, json=data)
-    return_status = response.json()['status']
-    if(return_status == ("ready "+query)):
-        num_commits = num_commits+1
-        print("curr ready count : ",num_commits)
+    try:
+        response = requests.post(curr_url, json=data)
+        return_status = response.json()['status']
+        if(return_status == ("ready "+query)):
+            num_commits = num_commits+1
+            print("curr ready count : ",num_commits)
+    except:
+        print("Phase one failed at : ",url)
+
 
 
 def execute_phase1(query,t_id):
@@ -102,7 +106,7 @@ def main_code():
     while True:
         num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (17,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (18,'varun','sde',27);"
         t_id = "t"+str(uuid.uuid4().hex)
         coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:
