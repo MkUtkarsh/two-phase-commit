@@ -1,13 +1,12 @@
-import socket     
+import pymysql
+from flask import Flask
+from flask import request
+from flask import jsonify
+import requests
 
-import pymysql      
+app = Flask(__name__)
 
-def perform_operation(query):
-    print("Performed "+query+"\n")
-
-s = socket.socket()          
-s.connect(('127.0.0.1', 8123))
-f = open("log.txt","w+") 
+f = open("log.txt","w+")
 
 
 connection = pymysql.connect(host='localhost',
@@ -17,16 +16,15 @@ connection = pymysql.connect(host='localhost',
                              autocommit=False)
 cursor = connection.cursor()
 
-while True:
-    # putting f here to see output of log while the process is running
-    received_msg = s.recv(1024).decode('utf-8').strip()
-    query = received_msg[8:]
-    print("Query: ",query)
+@app.route('/phase1',methods=["POST"])
+def run_phase1():
+    data = request.get_json()
+    received_query = data['query']
+    t_id = data['t_id']
 
-    # phase-1 checking if the client is ready
     prepare_ready = True
     try:
-        cursor.execute(query)
+        cursor.execute(received_query)
     except:
         prepare_ready = False
     print("prepare status is : ",prepare_ready)
@@ -34,28 +32,34 @@ while True:
     operation = input("Are you ready to perform above query? Enter yes or no: ").lower()
 
     if(operation == "yes" and prepare_ready):
-        f.write("ready "+query+"\n")
+        f.write("Ready \""+received_query+"\" "+t_id+"\n")
         f.flush()
-        s.send(("ready "+query).encode())
+        return jsonify({'status': "ready "+received_query})
     else:
-        f.write("no "+query+"\n")
+        f.write("No \""+received_query+"\" "+t_id+"\n")
         f.flush()
-        s.send(("abort "+query).encode())
-    
-    # Phase 1 has ended
+        return jsonify({'status': "abort "+received_query})
 
+@app.route('/phase2',methods=["POST"])
+def run_phase2():
+    data = request.get_json()
+    received_query = data['query']
+    t_id = data['t_id']
+    decision = data['decision']
 
-    # waiting for commit or abort from the coordinator
-    final_operation = s.recv(1024).decode('utf-8').strip()
-
-    if(final_operation == ("Commit "+query)):
-        f.write("Commit "+query+"\n")
+    if(decision == ("Commit")):
+        f.write("Commit \""+received_query+"\" "+t_id+"\n")
         f.flush()
         connection.commit()
         print("committed at client1 and written in log")
     else:
-        f.write("Abort "+query+"\n")
+        f.write("Abort \""+received_query+"\" "+t_id+"\n")
         f.flush()
         connection.rollback()
         print("Got abort from coord. Hence aborted the transaction")
+    return ('', 204)
+    
+
+if __name__ == '__main__':
+   app.run(host='0.0.0.0',port=5125,debug=True)
    

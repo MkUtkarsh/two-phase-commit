@@ -4,15 +4,16 @@ from flask import request
 from flask import jsonify
 import requests
 import uuid
+import threading
 
 app = Flask(__name__)
 
 num_commits = 0
-num_of_clients = 1
+num_of_clients = 2
 f = open("log.txt","w+")
 
 # client_addresses = ["http://localhost:5123","http://localhost:5124","http://localhost:5125"]
-client_addresses = ["http://localhost:5124"]
+client_addresses = ["http://localhost:5124","http://localhost:5125"]
 connection = pymysql.connect(host='localhost',
                              user='user',
                              password='iiit123',
@@ -20,6 +21,19 @@ connection = pymysql.connect(host='localhost',
                              autocommit=False)
                 
 cursor = connection.cursor()
+
+def thread_function(url,query,t_id):
+    global num_commits
+    curr_url = url+"/phase1"
+    data = {
+        "query": query,
+        "t_id": t_id
+    }
+    response = requests.post(curr_url, json=data)
+    return_status = response.json()['status']
+    if(return_status == ("ready "+query)):
+        num_commits = num_commits+1
+        print("curr ready count : ",num_commits)
 
 
 def execute_phase1(query,t_id):
@@ -42,17 +56,14 @@ def execute_phase1(query,t_id):
         connection.rollback()
         return coord_ready
 
+    threads = []
     for c in client_addresses:
-        curr_url = c+"/phase1"
-        data = {
-            "query": query,
-            "t_id": t_id
-        }
-        response = requests.post(curr_url, json=data)
-        return_status = response.json()['status']
-        if(return_status == ("ready "+query)):
-            num_commits = num_commits+1
-            print("curr ready count : ",num_commits)
+        x = threading.Thread(target=thread_function, args=(c,query,t_id))
+        threads.append(x)
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
     return coord_ready
 
 def execute_phase2(query,t_id):
@@ -91,15 +102,13 @@ def main_code():
     while True:
         num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (16,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (17,'varun','sde',27);"
         t_id = "t"+str(uuid.uuid4().hex)
         coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:
             execute_phase2(query,t_id)
         flag = input("Do you want to fire new query?Type yes or no: ")
         if(flag == "no"):
-            for client in client_addresses:
-                client.send("End session".encode())
             break
 
 if __name__ == '__main__':
