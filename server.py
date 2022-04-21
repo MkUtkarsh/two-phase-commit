@@ -1,13 +1,18 @@
-import socket
 import pymysql.cursors 
-import atexit
+from flask import Flask
+from flask import request
+from flask import jsonify
+import requests
+import uuid
 
-num_commits,num_of_clients = 0,3
+app = Flask(__name__)
+
+num_commits = 0
+num_of_clients = 1
 f = open("log.txt","w+")
 
-client_addresses = []
-query = ""
-
+# client_addresses = ["http://localhost:5123","http://localhost:5124","http://localhost:5125"]
+client_addresses = ["http://localhost:5124"]
 connection = pymysql.connect(host='localhost',
                              user='user',
                              password='iiit123',
@@ -16,25 +21,11 @@ connection = pymysql.connect(host='localhost',
                 
 cursor = connection.cursor()
 
-def make_connection():
 
-    s = socket.socket()
-    port = 8123
-    s.bind(("127.0.0.1", port))
-    s.listen()
-
-    for i in range(num_of_clients):
-        p = s.accept()
-        c, _ = p
-        client_addresses.append(c)
-    return s
-
-# this is phase1
-def send_initial_message(query):
+def execute_phase1(query,t_id):
     global num_commits
-    global client_addresses
     print("Write prepare in log ")
-    f.write("Prepare "+query+"\n")
+    f.write("Prepare "+query+" "+t_id+"\n")
     f.flush()
 
     coord_ready = True
@@ -51,66 +42,67 @@ def send_initial_message(query):
         connection.rollback()
         return coord_ready
 
-    for client in client_addresses:
-        client.send(("Prepare "+query).encode())
-        operation_type = client.recv(1024).decode('utf-8').strip()
-        if(operation_type == ("ready "+query)):
-            num_commits += 1
+    for c in client_addresses:
+        curr_url = c+"/phase1"
+        data = {
+            "query": query,
+            "t_id": t_id
+        }
+        response = requests.post(curr_url, json=data)
+        return_status = response.json()['status']
+        if(return_status == ("ready "+query)):
+            num_commits = num_commits+1
             print("curr ready count : ",num_commits)
-    
     return coord_ready
 
-
-# This is phase2
-def send_final_message():
-
-    global query
-    global client_addresses
-    global num_of_clients
+def execute_phase2(query,t_id):
     global num_commits
-    global f
-
     if(num_commits < num_of_clients):
-        f.write("Abort "+query+"\n")
+        f.write("Abort "+query+" "+t_id+"\n")
         f.flush()
         connection.rollback()
         print("all clients are not ready hence aborting and writing in log")
-        for client in client_addresses:
-            client.send(("Abort "+query).encode())
+        for c in client_addresses:
+            curr_url = c+"/phase2"
+            data = {
+                "query": query,
+                "t_id": t_id,
+                "decision": "Abort"
+            }
+            response = requests.post(curr_url, json=data)
+            # client.send(("Abort "+query).encode())
     else:
         f.write("Commit "+query+"\n")
         f.flush()
         connection.commit()
         print("committed at coord and writing in log")
-        for client in client_addresses:
-            client.send(("Commit "+query).encode())
-    
-def perform_main_code():
-    global query
-    global client_addresses
-    global num_commits
+        for c in client_addresses:
+            curr_url = c+"/phase2"
+            data = {
+                "query": query,
+                "t_id": t_id,
+                "decision": "Commit"
+            }
+            response = requests.post(curr_url, json=data)
 
     
+def main_code():
+    # global num_commits
+
     while True:
+        num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (11,'varun','sde',27);"
-        coord_ready = send_initial_message(query) # phase1
+        # query = "INSERT INTO employee_table VALUES (13,'varun','sde',27);"
+        t_id = "t"+str(uuid.uuid4().hex)
+        coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:
-            send_final_message()
+            execute_phase2(query,t_id)
         flag = input("Do you want to fire new query?Type yes or no: ")
         if(flag == "no"):
             for client in client_addresses:
                 client.send("End session".encode())
             break
-        query = ""
-        num_commits = 0
 
-
-s = make_connection()
-
-def exit_handler():
-    f.close()
-    s.close()
-atexit.register(exit_handler)
-
-perform_main_code()
+if __name__ == '__main__':
+#    app.run(host='0.0.0.0',port=5123,debug=True)
+   main_code()
