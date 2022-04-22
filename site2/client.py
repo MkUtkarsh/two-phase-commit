@@ -1,3 +1,4 @@
+from pkg_resources import resource_string
 import pymysql
 from flask import Flask
 from flask import request
@@ -11,8 +12,8 @@ f = open("log.txt","a+")
 coord_url = "http://localhost:5122"
 
 connection = pymysql.connect(host='localhost',
-                             user='user',
-                             password='iiit123',
+                             user='root',
+                             password='1234',
                              db='client2',
                              autocommit=False)
 cursor = connection.cursor()
@@ -62,14 +63,19 @@ def run_phase2():
     return ('', 204)
 
 def recover():
+    with open("log.txt","r") as file:
+        file_content = file.read()
+        if(file_content == ""):
+            return
+    
     df = pd.read_csv("log.txt", sep='\*\*\*',engine='python',header=None)
     df.columns =['status', 'query', 'id']
-    print(df)
-    print("last row : ",df.iloc[-1])
+    # print(df)
+    # print("last row : ",df.iloc[-1])
     last_status = df.iloc[-1]['status']
     last_t_id = df.iloc[-1]['id']
     last_query = df.iloc[-1]['query']
-    print('last status : ',last_status)
+    # print('last status : ',last_status)
     if(last_status == 'Ready'):
         curr_url = coord_url+"/get_status"
         data = {
@@ -79,20 +85,31 @@ def recover():
         try:
             response = requests.post(curr_url, json=data)
             decision_at_coord = response.json()['decision']
+            print("Decision is: ",decision_at_coord)
             if(decision_at_coord == 'Commit'):
+                # print("entered commit last query part")
+                print("Co-ordinator sent Commit for last transaction")
                 last_query = last_query[1:-1]
+                print("query: ",last_query)
                 cursor.execute(last_query)
+                print("query to execute : ",last_query)
                 connection.commit()
                 f.write("Commit***\""+last_query+"\"***"+last_t_id+"\n")
                 f.flush()
-                connection.commit()
             else:
+                # print("entered abort last query part")
+                print("Co-ordinator sent Abort for last transaction")
+                connection.rollback()
                 f.write("Abort***\""+last_query+"\"***"+last_t_id+"\n")
                 f.flush()
-                connection.rollback()
         except:
             print("Phase one failed at : ",curr_url)
             pass
+
+    elif(last_status == 'No'):
+        connection.rollback()
+        f.write("Abort***\""+last_query+"\"***"+last_t_id+"\n")
+        f.flush()
 
 if __name__ == '__main__':
     recover()

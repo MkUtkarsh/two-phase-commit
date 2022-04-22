@@ -1,6 +1,0 @@
-ready (Select * from table1)
-Commit (Select * from table1)
-ready (Select * from table2 where age>20)
-Abort (Select * from table2 where age>20)
-no (Select age from table2 where name="santosh")
-Abort (Select age from table2 where name="santosh")

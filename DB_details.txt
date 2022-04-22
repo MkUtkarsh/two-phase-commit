@@ -16,7 +16,7 @@ CREATE TABLE employee_table(
 ##################### Transaction commands ###############
 START TRANSACTION;
 
-INSERT INTO employee_table VALUES (1,'varun','sde',27);
+INSERT INTO employee_table VALUES (10,'karan','developer',24);
 
 COMMIT;
 

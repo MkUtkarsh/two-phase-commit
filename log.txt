@@ -1,3 +1,12 @@
-Commit (Select * from table1)
-Abort (Select * from table2 where age>20)
-Abort (Select age from table2 where name="santosh")
+Prepare***"INSERT INTO employee_table VALUES (1,'karan','developer',24);"***t9e6c1398668a44a4b5c921b3dfe02772
+Commit***"INSERT INTO employee_table VALUES (1,'karan','developer',24);"***t9e6c1398668a44a4b5c921b3dfe02772
+Prepare***"INSERT INTO employee_table VALUES (2,'karan','developer',24);"***tae11eeb745df4cd5bdbf65f4bbcc402c
+Abort***"INSERT INTO employee_table VALUES (2,'karan','developer',24);"***tae11eeb745df4cd5bdbf65f4bbcc402c
+Prepare***"INSERT INTO employee_table VALUES (3,'karan','developer',24);"***t47b411908552475a9ca58bef915b5365
+Abort***"INSERT INTO employee_table VALUES (3,'karan','developer',24);"***t47b411908552475a9ca58bef915b5365
+Prepare***"INSERT INTO employee_table VALUES (10,'karan','developer',24);"***t633dcde2e6684869916e891dcf03f376
+Commit***"INSERT INTO employee_table VALUES (10,'karan','developer',24);"***t633dcde2e6684869916e891dcf03f376
+Prepare***"INSERT INTO employee_table VALUES (12,'karan','developer',24);"***t65389f0f8962464694d18dec61dca185
+Abort***"INSERT INTO employee_table VALUES (12,'karan','developer',24);"***t65389f0f8962464694d18dec61dca185
+Prepare***"INSERT INTO employee_table VALUES (13,'karan','developer',24);"***t9ae89856027448259b281e233caecf3a
+Abort***"INSERT INTO employee_table VALUES (13,'karan','developer',24);"***t9ae89856027448259b281e233caecf3a

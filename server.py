@@ -20,8 +20,8 @@ f = open("log.txt","a+")
 # client_addresses = ["http://localhost:5123","http://localhost:5124","http://localhost:5125"]
 client_addresses = ["http://localhost:5124","http://localhost:5125"]
 connection = pymysql.connect(host='localhost',
-                             user='user',
-                             password='iiit123',
+                             user='root',
+                             password='1234',
                              db='coordinator',
                              autocommit=False)
                 
@@ -122,7 +122,7 @@ def main_code():
     while True:
         num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (108,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (106,'varun','sde',27);"
         t_id = "t"+str(uuid.uuid4().hex)
         coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:
@@ -135,20 +135,27 @@ def main_code():
 @app.route('/get_status',methods=["POST"])
 def get_status():
     data = request.get_json()
-    received_query = data['query']
-    t_id = data['t_id']
-    df = pd.read_csv("log.txt", sep='\*\*\*',engine='python',header=None)
-    df.columns =['status', 'query', 'id']
-    # print("database from coord")
-    # print(df)
-    status_list = df.loc[df['id'] == t_id]['status'].to_list()
-    # print("status list is : ",status_list)
-    #status_list will contain prepare + (either Commit or Abort)
-    if 'Commit' in status_list:
+    query_string = data['query']
+    log_content = []
+
+    # read logfile
+    with open("log.txt","r") as logfile:
+        log_content = logfile.readlines()
+    
+    status_dictionary = dict()
+    for line in log_content:
+        a,b,_ = line.split("***")
+        if(a == "Prepare"):
+            continue
+        status_dictionary[b] = a
+
+    if(status_dictionary[query_string] ==  'Commit'):
         # print("entered commit return part")
+        print("Sent Commit in response to get_status")
         return jsonify({'decision': "Commit"})
     else:
         # print("entered abort return part")
+        print("Sent Abort in response to get_status")
         return jsonify({'decision': "Abort"})
 
 if __name__ == '__main__':

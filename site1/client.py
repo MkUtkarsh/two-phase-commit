@@ -1,3 +1,4 @@
+from pkg_resources import resource_string
 import pymysql
 from flask import Flask
 from flask import request
@@ -11,8 +12,8 @@ f = open("log.txt","a+")
 coord_url = "http://localhost:5122"
 
 connection = pymysql.connect(host='localhost',
-                             user='user',
-                             password='iiit123',
+                             user='root',
+                             password='1234',
                              db='client1',
                              autocommit=False)
 cursor = connection.cursor()
@@ -62,6 +63,11 @@ def run_phase2():
     return ('', 204)
 
 def recover():
+    with open("log.txt","r") as file:
+        file_content = file.read()
+        if(file_content == ""):
+            return
+    
     df = pd.read_csv("log.txt", sep='\*\*\*',engine='python',header=None)
     df.columns =['status', 'query', 'id']
     # print(df)
@@ -79,22 +85,30 @@ def recover():
         try:
             response = requests.post(curr_url, json=data)
             decision_at_coord = response.json()['decision']
+            print("Decision is: ",decision_at_coord)
             if(decision_at_coord == 'Commit'):
                 # print("entered commit last query part")
+                print("Co-ordinator sent Commit for last transaction")
+                cursor.execute(last_query)
                 last_query = last_query[1:-1]
                 print("query to execute : ",last_query)
-                cursor.execute(last_query)
                 connection.commit()
                 f.write("Commit***\""+last_query+"\"***"+last_t_id+"\n")
                 f.flush()
             else:
                 # print("entered abort last query part")
+                print("Co-ordinator sent Abort for last transaction")
+                connection.rollback()
                 f.write("Abort***\""+last_query+"\"***"+last_t_id+"\n")
                 f.flush()
-                connection.rollback()
         except:
             print("Phase one failed at : ",curr_url)
             pass
+
+    elif(last_status == 'No'):
+        connection.rollback()
+        f.write("Abort***\""+last_query+"\"***"+last_t_id+"\n")
+        f.flush()
 
 if __name__ == '__main__':
     recover()
