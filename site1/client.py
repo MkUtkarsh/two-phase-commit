@@ -8,7 +8,7 @@ import requests
 app = Flask(__name__)
 
 f = open("log.txt","a+")
-
+coord_url = "http://localhost:5122"
 
 connection = pymysql.connect(host='localhost',
                              user='user',
@@ -64,16 +64,38 @@ def run_phase2():
 def recover():
     df = pd.read_csv("log.txt", sep='\*\*\*',engine='python',header=None)
     df.columns =['status', 'query', 'id']
-    print(df)
-    print("last row : ",df.iloc[-1])
+    # print(df)
+    # print("last row : ",df.iloc[-1])
     last_status = df.iloc[-1]['status']
-    print('last status : ',last_status)
+    last_t_id = df.iloc[-1]['id']
+    last_query = df.iloc[-1]['query']
+    # print('last status : ',last_status)
     if(last_status == 'Ready'):
-        # Need to find out if the last status was commited or aborted
-        # will ask server about the status 
-        pass
+        curr_url = coord_url+"/get_status"
+        data = {
+            'query': last_query,
+            't_id': last_t_id
+        }
+        try:
+            response = requests.post(curr_url, json=data)
+            decision_at_coord = response.json()['decision']
+            if(decision_at_coord == 'Commit'):
+                # print("entered commit last query part")
+                last_query = last_query[1:-1]
+                print("query to execute : ",last_query)
+                cursor.execute(last_query)
+                f.write("Commit***\""+last_query+"\"***"+last_t_id+"\n")
+                f.flush()
+            else:
+                # print("entered abort last query part")
+                f.write("Abort***\""+last_query+"\"***"+last_t_id+"\n")
+                f.flush()
+                connection.rollback()
+        except:
+            print("Phase one failed at : ",curr_url)
+            pass
 
 if __name__ == '__main__':
     recover()
-    #app.run(host='0.0.0.0',port=5124,debug=True)
+    app.run(host='0.0.0.0',port=5124,debug=True)
    

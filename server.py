@@ -6,6 +6,7 @@ import requests
 import uuid
 import threading
 import time
+import pandas as pd
 
 # log = logging.getLogger('werkzeug')
 # log.setLevel(logging.ERROR)
@@ -76,6 +77,10 @@ def execute_phase1(query,t_id):
 
 def execute_phase2(query,t_id):
     global num_commits
+    while True:
+        continue_phase_2 = input("Shall I continue to phase 2 (yes or no): ")
+        if(continue_phase_2 == "yes"):
+            break
     if(num_commits < num_of_clients):
         f.write("Abort***\""+query+"\"***"+t_id+"\n")
         f.flush()
@@ -117,7 +122,7 @@ def main_code():
     while True:
         num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (4,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (106,'varun','sde',27);"
         t_id = "t"+str(uuid.uuid4().hex)
         coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:
@@ -126,8 +131,27 @@ def main_code():
         if(flag == "no"):
             break
 
+# gets the transaction id and returns if it was commited or aborted
+@app.route('/get_status',methods=["POST"])
+def get_status():
+    data = request.get_json()
+    received_query = data['query']
+    t_id = data['t_id']
+    df = pd.read_csv("log.txt", sep='\*\*\*',engine='python',header=None)
+    df.columns =['status', 'query', 'id']
+    # print("database from coord")
+    # print(df)
+    status_list = df.loc[df['id'] == t_id]['status'].to_list()
+    # print("status list is : ",status_list)
+    #status_list will contain prepare + (either Commit or Abort)
+    if 'Commit' in status_list:
+        # print("entered commit return part")
+        return jsonify({'decision': "Commit"})
+    else:
+        # print("entered abort return part")
+        return jsonify({'decision': "Abort"})
+
 if __name__ == '__main__':
     x = threading.Thread(target=main_code, args=())
     x.start()
     app.run(host='0.0.0.0',port=5122,debug=False)
-    
