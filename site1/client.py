@@ -84,6 +84,7 @@ def recover():
                 last_query = last_query[1:-1]
                 print("query to execute : ",last_query)
                 cursor.execute(last_query)
+                connection.commit()
                 f.write("Commit***\""+last_query+"\"***"+last_t_id+"\n")
                 f.flush()
             else:

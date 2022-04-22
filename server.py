@@ -122,7 +122,7 @@ def main_code():
     while True:
         num_commits = 0
         query = input("Enter new query: ")
-        # query = "INSERT INTO employee_table VALUES (106,'varun','sde',27);"
+        # query = "INSERT INTO employee_table VALUES (108,'varun','sde',27);"
         t_id = "t"+str(uuid.uuid4().hex)
         coord_ready = execute_phase1(query,t_id) # phase1
         if coord_ready:
